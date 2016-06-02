@@ -1,17 +1,38 @@
 var http = require('http');
 var fs = require('fs');
 var path = require('path');
+var mongodb = require('mongodb');
+var querystring = require('querystring');
 
 global.appRoot = path.resolve(__dirname);
 
-var home = "./"
+var MongoClient = mongodb.MongoClient;
+
+var dbURL = "mongodb://127.0.0.1:27017/test";
+
+MongoClient.connect(dbURL, (err, db) => {
+    if (err) {
+	console.log("Unable to connect to Mongo database, Error:", err);
+    } else {
+	console.log("connection established to ", dbURL);
+
+	db.createCollection('users', (err,result) => {
+	    if (err) {
+		console.log("failed at creating table, error:", err);
+	    }
+	    db.close();
+	});
+	
+    }
+});
+
 var server = http.createServer( (req, res) => {
 
     console.log("requested: ".concat(req.url));
     
     if (req.url == '/') {
 
-	fs.readFile(global.appRoot.concat("/public/index.html"), (err, data) => {
+	fs.readFile(global.appRoot.concat("/public/login.html"), (err, data) => {
 	    res.setHeader("Content-Type", "text/html");
 	    if (err != null) {
 		console.log(err);
@@ -38,6 +59,16 @@ var server = http.createServer( (req, res) => {
 		console.log(data);
 		res.end(data);
 	    });
+    } else if (req.url.indexOf('signon') >= 0) {
+	var queryData = "";
+	req.on('data', (data) => {
+	    queryData += data; 
+	    console.log("data: ", queryData);
+	});
+	req.on('end', () => {
+	    console.log(querystring.parse(queryData));
+	    res.end();
+	});
     } else {
 	console.log("requested unknown resource:".concat(req.url));
 	res.end();
