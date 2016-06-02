@@ -10,21 +10,30 @@ var MongoClient = mongodb.MongoClient;
 
 var dbURL = "mongodb://127.0.0.1:27017/test";
 
-MongoClient.connect(dbURL, (err, db) => {
-    if (err) {
-	console.log("Unable to connect to Mongo database, Error:", err);
-    } else {
-	console.log("connection established to ", dbURL);
 
-	db.createCollection('users', (err,result) => {
-	    if (err) {
-		console.log("failed at creating table, error:", err);
-	    }
-	    db.close();
-	});
-	
-    }
-});
+function createAccount(data) {
+    MongoClient.connect(dbURL, (err, db) => {
+	if (err) {
+	    console.log("Unable to connect to Mongo database, Error:", err);
+	} else {
+	    console.log("connection established to ", dbURL);
+
+	    db.createCollection('users', (err,result) => {
+		if (err) {
+		    console.log("failed at creating table, error:", err);
+		} else {
+		    var dataJSON = querystring.parse(data);
+		    result.insert(dataJSON, (err,result) => {
+			if (err) {
+			    console.log("error adding user: ", err);
+			}
+			console.log(result);			
+		    });
+		}
+	    }); 
+	}
+    });
+}
 
 var server = http.createServer( (req, res) => {
 
@@ -66,7 +75,7 @@ var server = http.createServer( (req, res) => {
 	    console.log("data: ", queryData);
 	});
 	req.on('end', () => {
-	    console.log(querystring.parse(queryData));
+	    createAccount(queryData); 
 	    res.end();
 	});
     } else {
