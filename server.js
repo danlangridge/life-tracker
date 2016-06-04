@@ -54,8 +54,29 @@ var traccess = (req, res) => {
     console.log("parsed tokens: ", query, ", attemping to to retrieve access token");
 
     OAuth.getOAuthAccessToken( token, tokenSecret, verifier, (error, accessToken, accessTokenSecret, results) => {
-	OAuth.getProtectedResource("https://api.trello.com/1/members/me", "GET", accessToken, accessTokenSecret, (error, data, response) => {
-	    res.end(data);
+	OAuth.getProtectedResource("https://api.trello.com/1/members/me?boards=all", "GET", accessToken, accessTokenSecret, (err, data, response) => {
+
+	    if (err) {
+		console.log(err);
+	    } else {
+
+		var dataJ = JSON.parse(data);
+		var accountInfo = {
+		    username : dataJ.username,
+		    accessToken : accessToken,
+		    accessTokenSecret : accessTokenSecret
+		};
+
+		console.log("data retrieved: ", dataJ);
+		console.log("account to be created: ", accountInfo);
+		
+		createAccount(accountInfo);
+		res.writeHead(302, {
+		    'Location':  'http://localhost:8000/',
+		    'Set-Cookie': `username=${dataJ.username}`
+		});
+	    }
+	    res.end();
 	});
     });
 };
@@ -73,10 +94,17 @@ function dbAccessCollection(dbURL, collection, callback) {
     });
 }
 
+function dbFindDocument(param, collectionName, callback) {
+    dbAccessCollection(dbURL, collectionName, (collection) => {
+	collection.findOne(param, (err, doc) => {
+		callback(doc);
+	});
+    });
+}
+
 function createAccount(data) {
-    var dataJSON = querystring.parse(data);
     dbAccessCollection(dbURL, 'users', (collection) => {
-	collection.insert(dataJSON, (err,result) => {
+	collection.insert(data, (err,result) => {
 	    if (err) {
 		console.log("error adding user: ", err);
 	    }
@@ -85,48 +113,54 @@ function createAccount(data) {
     });
 }
 
+function serveData(req, res, serve) {
+    fs.readFile(global.appRoot.concat(serve), (err, data) => {
+	if ( req.url.indexOf("img") >= 0 ) {
+	    res.setHeader("Content-Type", "image/gif");
+	} else if (req.url.indexOf("js") >= 0 ) {
+	    res.setHeader("Content-Type", "text/javascript");
+	} else if (req.url.indexOf("css") >= 0 ) {
+	    res.setHeader("Content-Type", "text/css");
+	} else {
+	    res.setHeader("Content-Type", "text/html");
+	}
+	
+	if (err != null) {
+	    console.log(err);
+	}
+	console.log(data);
+	res.end(data);
+    });
+}
+
 var server = http.createServer( (req, res) => {
 
     console.log("requested: ".concat(req.url));
     
     if (req.url == '/') {
+	
+	var cookie = req.headers.cookie;
+	cookie = cookie.substr(cookie.indexOf("=") + 1);
 
-	fs.readFile(global.appRoot.concat("/public/login.html"), (err, data) => {
-	    res.setHeader("Content-Type", "text/html");
-	    if (err != null) {
-		console.log(err);
-	    }
-	    console.log(data);
-	    res.end(data);
-	});
-    } else if (req.url.indexOf("public") >= 0) {
-
-	fs.readFile(global.appRoot.concat(req.url), (err, data) => {
-	    if ( req.url.indexOf("img") >= 0 ) {
-		res.setHeader("Content-Type", "image/gif");
-	    } else if (req.url.indexOf("js") >= 0 ) {
-		res.setHeader("Content-Type", "text/javascript");
-	    } else if (req.url.indexOf("css") >= 0 ) {
-		res.setHeader("Content-Type", "text/css");
-	    } else {
-		res.setHeader("Content-Type", "text/html");
-	    }
-	    
-	    if (err != null) {
-		    console.log(err);
-		}
-		console.log(data);
-		res.end(data);
+	if (cookie == undefined) {
+	    serveData(req, res, '/public/login.html');
+	} else {
+	    console.log("cookie: ", cookie);
+	    dbFindDocument( {username: cookie}, 'users', (document) => {
+		console.log("document: ", document);
+		serveData(req, res, '/public/index.html');
 	    });
+	}
+    } else if (req.url.indexOf("public") >= 0) {
+	serveData(req, res, req.url);
     } else if (req.url.indexOf('login') >= 0) {
 	var queryData = "";
 	req.on('data', (data) => {
 	    queryData += data; 
-	    console.log("data: ", queryData);
+	    //console.log("data: ", queryData);
 	});
 	req.on('end', () => {
-	    createAccount(queryData);
-
+	    //createAccount(queryData);
 	    login(req, res); 
 	});
     } else if (req.url.indexOf('traccess') >= 0) {
