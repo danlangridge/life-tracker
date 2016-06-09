@@ -6,7 +6,7 @@
     <body>
 	<p>Whoopie starting again!</p>
 	<img src="/public/img/sun.png" width=50px height=50px />
-	<button id="getBoards" data-url="/">getBoards</button>
+	<button id="getBoards" data-url="/getBoards">getBoards</button>
 	<p id="results"></p>
     </body>
 
@@ -48,7 +48,7 @@
 	 var oReq = new XMLHttpRequest();
 	 oReq.onload = function(e) {
 	     console.log("request in state onload");
-	     results.innerHTML = JSON.parse(e.target.response).message;
+	     results.innerHTML = JSON.stringify(JSON.parse(e.target.response).message);
 	 };
 	 oReq.onreadystatechange = function() {
 	     var readyState = toReadyStateDescription(oReq.readyState);
