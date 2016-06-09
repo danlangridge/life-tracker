@@ -14,6 +14,8 @@ var MongoClient = mongodb.MongoClient;
 
 var dbURL = "mongodb://127.0.0.1:27017/test";
 
+// oauth functions
+
 var requestURL = "https://trello.com/1/OAuthGetRequestToken";
 var accessURL = "https://trello.com/1/OAuthGetAccessToken";
 var authorizeURL = "https://trello.com/1/OAuthAuthorizeToken";
@@ -80,7 +82,14 @@ var traccess = (req, res) => {
 	});
     });
 };
-    
+
+
+// trello methods
+//function getTrelloBoards(accessToken,:q
+//	OAuth.getProtectedResource("https://api.trello.com/1/members/me?boards=all", "GET", accessToken, accessTokenSecret, (err, data, response) => {
+
+// database functions
+
 function dbAccessCollection(dbURL, collection, callback) {
     MongoClient.connect(dbURL, (err, db) => {
 	if (err) {
@@ -106,12 +115,14 @@ function createAccount(data) {
     dbAccessCollection(dbURL, 'users', (collection) => {
 	collection.insert(data, (err,result) => {
 	    if (err) {
-		console.log("error adding user: ", err);
+	console.log("error adding user: ", err);
 	    }
 	    console.log(result);	
 	});
     });
 }
+
+// server functions
 
 function serveData(req, res, serve) {
     fs.readFile(global.appRoot.concat(serve), (err, data) => {
@@ -128,7 +139,6 @@ function serveData(req, res, serve) {
 	if (err != null) {
 	    console.log(err);
 	}
-	console.log(data);
 	res.end(data);
     });
 }
@@ -136,8 +146,13 @@ function serveData(req, res, serve) {
 var server = http.createServer( (req, res) => {
 
     console.log("requested: ".concat(req.url));
-    
-    if (req.url == '/') {
+
+    if (req.headers['x-requested-with'] === 'XMLHttpRequest') {
+
+	res.writeHead(200, {'Content-Type': 'application/json'});
+	res.end(JSON.stringify({message: 'Hello World!'}));
+
+    } else if (req.url == '/') {
 	
 	var cookie = req.headers.cookie;
 	cookie = cookie.substr(cookie.indexOf("=") + 1);
@@ -166,8 +181,8 @@ var server = http.createServer( (req, res) => {
     } else if (req.url.indexOf('traccess') >= 0) {
 	traccess(req,res);
     } else {
+	serveData(req, res, req.url);
 	console.log("requested unknown resource:".concat(req.url));
-	res.end();
     }
 });
 
