@@ -85,13 +85,19 @@ var traccess = (req, res) => {
 
 
 // trello methods
+
 function getTrelloBoards( accessToken, accessTokenSecret, callback) {
     OAuth.getProtectedResource("https://api.trello.com/1/members/me?boards=all", "GET", accessToken, accessTokenSecret, (err, data, response) => {
 	callback(data);
     });
 }
 
-	
+function getTrelloCards( accessToken, accessTokenSecret, boardId, callback) {
+    OAuth.getProtectedResource("https://api.trello.com/1/boards/" + boardId + "/cards", "GET", accessToken, accessTokenSecret, (err, data, response) => {
+	callback(data);
+    });
+}
+
 // database functions
 
 function dbAccessCollection(dbURL, collection, callback) {
@@ -163,20 +169,28 @@ var server = http.createServer( (req, res) => {
 	    dbFindDocument( {username: cookie}, 'users', (document) => {
 		console.log("document: ", document);
 		res.writeHead(200, {'Content-Type': 'application/json'});
-		getTrelloBoards(document.accessToken, document.accessTokenSecret, (response) => {
-		    var data = JSON.parse(response);
-		    res.end(JSON.stringify({message: data.boards}));
-		});
+
+		if (req.url == '/getBoards') {
+		    getTrelloBoards(document.accessToken, document.accessTokenSecret, (response) => {
+			var data = JSON.parse(response);
+			res.end(JSON.stringify({message: data.boards}));
+		    });
+		} else if (req.url == '/getCards') {
+		    getTrelloCards(document.accessToken, document.accessTokenSecret, '573e158369ca0ba561711b0a', (response) => {
+			var data = JSON.parse(response);
+			res.end(JSON.stringify({message: data})); 
+		    });
+		}
 	    });
 	}
     } else if (req.url == '/') {
 	
 	var cookie = req.headers.cookie;
-	cookie = cookie.substr(cookie.indexOf("=") + 1);
 
 	if (cookie == undefined) {
 	    serveData(req, res, '/public/login.html');
 	} else {
+	    cookie = cookie.substr(cookie.indexOf("=") + 1);
 	    console.log("cookie: ", cookie);
 	    dbFindDocument( {username: cookie}, 'users', (document) => {
 		console.log("document: ", document);

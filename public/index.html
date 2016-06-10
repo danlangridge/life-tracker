@@ -7,7 +7,10 @@
 	<p>Whoopie starting again!</p>
 	<img src="/public/img/sun.png" width=50px height=50px />
 	<button id="getBoards" data-url="/getBoards">getBoards</button>
-	<p id="results"></p>
+	<ul id="boards">
+	</ul>
+	<button id="getCards" data-url="/getCards">getCards</button>
+	<ul id="cards"></ul>
     </body>
 
     <script type="text/javascript">
@@ -25,7 +28,9 @@
      };
 
      var getBoards = document.getElementById('getBoards'),
-	 results = document.getElementById('results'),
+	 getCards = document.getElementById('getCards'),
+	 boards = document.getElementById('boards'),
+	 cards = document.getElementById('cards'),
 	 toReadyStateDescription = function (state) {
 	     switch(state) {
 		 case 0:
@@ -43,12 +48,31 @@
 	     }
 	 };
 
+     function formatBoards(boardsJ) {
+	 var listHTML = "";
+	 for (var i = 0; i < boardsJ.length; i++) {
+	     var currentBoard = boardsJ[i];
+	     listHTML = listHTML + "<il>" + currentBoard.name + "</il>"; 
+	 }
+	 return listHTML;
+     }
+
+     function formatCards(cardsJ) {
+	 var listHTML = "";
+	 for (var i = 0; i < cardsJ.length; i++) {
+	     var currentCard = cardsJ[i];
+	     listHTML = listHTML + "<il>" + currentCard.name + "</il>"; 
+	 }
+	 return listHTML;
+     }
+     
      getBoards.addEventListener('click', function (e) {
 	 console.log("getBoards pressed");
 	 var oReq = new XMLHttpRequest();
 	 oReq.onload = function(e) {
 	     console.log("request in state onload");
-	     results.innerHTML = JSON.stringify(JSON.parse(e.target.response).message);
+	     
+	     boards.innerHTML = formatBoards(JSON.parse(e.target.response).message);
 	 };
 	 oReq.onreadystatechange = function() {
 	     var readyState = toReadyStateDescription(oReq.readyState);
@@ -58,6 +82,23 @@
 	     oReq.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 	     oReq.send();
      });
+
+     getCards.addEventListener('click', function (e) {
+	 console.log("getCards pressed");
+	 var oReq = new XMLHttpRequest();
+	 oReq.onload = function(e) {
+	     console.log("request in state onload");
+	     cards.innerHTML = formatCards(JSON.parse(e.target.response).message);
+	 };
+	 oReq.onreadystatechange = function() {
+	     var readyState = toReadyStateDescription(oReq.readyState);
+	     console.log("request ready state change: ", readyState);
+	 }; 
+	     oReq.open('GET', e.target.dataset.url, true);
+	     oReq.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+	     oReq.send();
+     });
+
     </script>
 
 </html>
