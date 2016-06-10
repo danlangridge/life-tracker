@@ -175,8 +175,12 @@ var server = http.createServer( (req, res) => {
 			var data = JSON.parse(response);
 			res.end(JSON.stringify({message: data.boards}));
 		    });
-		} else if (req.url == '/getCards') {
-		    getTrelloCards(document.accessToken, document.accessTokenSecret, '573e158369ca0ba561711b0a', (response) => {
+		} else if (req.url.indexOf('/getCards') >= 0) {
+
+		    var url_parts = url.parse(req.url, true);
+		    var query = url_parts.query;
+		    console.log(`Query: ${query.boardId}`);
+		    getTrelloCards(document.accessToken, document.accessTokenSecret, query.boardId, (response) => {
 			var data = JSON.parse(response);
 			res.end(JSON.stringify({message: data})); 
 		    });

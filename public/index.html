@@ -7,10 +7,9 @@
 	<p>Whoopie starting again!</p>
 	<img src="/public/img/sun.png" width=50px height=50px />
 	<button id="getBoards" data-url="/getBoards">getBoards</button>
-	<ul id="boards">
-	</ul>
-	<button id="getCards" data-url="/getCards">getCards</button>
-	<ul id="cards"></ul>
+	<select id="boards">
+	</select>
+	<select id="cards"></select>
     </body>
 
     <script type="text/javascript">
@@ -28,7 +27,6 @@
      };
 
      var getBoards = document.getElementById('getBoards'),
-	 getCards = document.getElementById('getCards'),
 	 boards = document.getElementById('boards'),
 	 cards = document.getElementById('cards'),
 	 toReadyStateDescription = function (state) {
@@ -52,7 +50,7 @@
 	 var listHTML = "";
 	 for (var i = 0; i < boardsJ.length; i++) {
 	     var currentBoard = boardsJ[i];
-	     listHTML = listHTML + "<il>" + currentBoard.name + "</il>"; 
+	     listHTML = listHTML + `<option value="${currentBoard.id}">${currentBoard.name}</option>`; 
 	 }
 	 return listHTML;
      }
@@ -61,12 +59,12 @@
 	 var listHTML = "";
 	 for (var i = 0; i < cardsJ.length; i++) {
 	     var currentCard = cardsJ[i];
-	     listHTML = listHTML + "<il>" + currentCard.name + "</il>"; 
+	     listHTML = listHTML + `<option value="${currentCard.id}">${currentCard.name}</option>`; 
 	 }
 	 return listHTML;
      }
      
-     getBoards.addEventListener('click', function (e) {
+     window.onload = function() {
 	 console.log("getBoards pressed");
 	 var oReq = new XMLHttpRequest();
 	 oReq.onload = function(e) {
@@ -78,13 +76,13 @@
 	     var readyState = toReadyStateDescription(oReq.readyState);
 	     console.log("request ready state change: ", readyState);
 	 }; 
-	     oReq.open('GET', e.target.dataset.url, true);
+	     oReq.open('GET', '/getBoards', true);
 	     oReq.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 	     oReq.send();
-     });
+     };
 
-     getCards.addEventListener('click', function (e) {
-	 console.log("getCards pressed");
+     boards.addEventListener('change', function (e) {
+	 console.log("Board selected");
 	 var oReq = new XMLHttpRequest();
 	 oReq.onload = function(e) {
 	     console.log("request in state onload");
@@ -94,7 +92,7 @@
 	     var readyState = toReadyStateDescription(oReq.readyState);
 	     console.log("request ready state change: ", readyState);
 	 }; 
-	     oReq.open('GET', e.target.dataset.url, true);
+	     oReq.open('GET', '/getCards' + '?boardId=' + boards.options[boards.selectedIndex].value, true);
 	     oReq.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 	     oReq.send();
      });
