@@ -202,7 +202,7 @@
 
 	 var margin = 5;
 	 var numBars = 7;
-	 var padding = 10;
+	 var padding = 0;
 	 var barWidth = (width - (padding*numBars - margin*2)) / numBars;   
 
 	 var barPosition = margin;
@@ -210,15 +210,19 @@
 	     var rectStartHeight = 0;
 	     for (j = 0; j < data[i].length; j++) {
 		 console.log("data:", data[i][j]);
-	 
+
 		 var rectHeight = normalizeToDay(data[i][j].time)*height;
-		 ctx.rect(barPosition, rectStartHeight + margin, barWidth, rectHeight);
+		 var rectColor = normalizeToDay(data[i][j].time)*255;
+		 console.log("rectColor: ", `rgba(0,${rectColor},${rectColor},1)`, " rectHeight: ", rectHeight);
+		 ctx.fillStyle = `rgba(0,${Math.floor(rectColor)},${Math.floor(rectColor)},1)`;
+		 ctx.strokeWidth = "5"; 
+		 ctx.fillRect(barPosition, rectStartHeight + margin, barWidth, rectHeight);
 		 rectStartHeight = rectStartHeight + rectHeight;
 	     }
+	     
 	     barPosition = (i + 1)*(barWidth+padding) + margin ;
 	 }
-
-	 ctx.stroke(); 
+		 ctx.stroke(); 
      }
 
      generateHTML5Graph();
